@@ -1,21 +1,4 @@
 /* =====================================================
-   MASTER DATA STORE
-
-   Every topic file will populate this object.
-
-   Example:
-
-   data["Core Java Fundamentals"] = [
-      {
-         question: "...",
-         answer: "..."
-      }
-   ];
-===================================================== */
-
-//const data = {};
-
-/* =====================================================
    DOM REFERENCES
 ===================================================== */
 
@@ -37,6 +20,39 @@ function generateId(text){
     return text
         .toLowerCase()
         .replace(/[^a-z0-9]+/g,"-");
+}
+
+function escapeHtml(text){
+
+    if(!text){
+        return "";
+    }
+
+    return text
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+}
+
+function copyCode(button){
+
+    const code =
+    button.parentElement
+          .querySelector("code")
+          .innerText;
+
+    navigator.clipboard
+             .writeText(code);
+
+    button.textContent =
+    "Copied!";
+
+    setTimeout(() => {
+
+        button.textContent =
+        "Copy";
+
+    },2000);
 }
 
 /* =====================================================
@@ -151,7 +167,33 @@ function renderQuestions(){
 
                     <div class="answer">
 
-                        ${item.answer}
+                        <p>
+                            ${item.answer}
+                        </p>
+
+                        ${
+                            item.code
+                            ?
+                            `
+                            <div class="code-container">
+
+                                <button
+                                    class="copy-btn"
+                                    onclick="copyCode(this)">
+                                    Copy
+                                </button>
+
+                                <div class="code-header">
+                                    JAVA
+                                </div>
+
+                                <pre class="code-block"><code>${escapeHtml(item.code)}</code></pre>
+
+                            </div>
+                            `
+                            :
+                            ""
+                        }
 
                     </div>
 
@@ -210,15 +252,17 @@ function initializeSearch(){
         function(){
 
             const keyword =
-            this.value.toLowerCase();
+            this.value
+                .trim()
+                .toLowerCase();
 
             document
             .querySelectorAll(".question")
             .forEach(question => {
 
                 const content =
-                question.innerText
-                .toLowerCase();
+                question.textContent
+                        .toLowerCase();
 
                 question.style.display =
                 content.includes(keyword)
@@ -236,6 +280,8 @@ function initializeSearch(){
    ACTIVE CATEGORY HIGHLIGHT
 ===================================================== */
 
+let sectionObserver = null;
+
 function updateSidebarHighlight(){
 
     const sections =
@@ -246,10 +292,15 @@ function updateSidebarHighlight(){
         "#categoryMenu li"
     );
 
-    if(sections.length === 0)
+    if(sections.length === 0){
         return;
+    }
 
-    const observer =
+    if(sectionObserver){
+        sectionObserver.disconnect();
+    }
+
+    sectionObserver =
     new IntersectionObserver(
 
         entries => {
@@ -292,7 +343,7 @@ function updateSidebarHighlight(){
 
     sections.forEach(section => {
 
-        observer.observe(section);
+        sectionObserver.observe(section);
 
     });
 
@@ -314,16 +365,15 @@ function updateStats(){
 
     });
 
-    const firstCard =
-    document.querySelector(
+    const statCards =
+    document.querySelectorAll(
         ".stat-card h3"
     );
 
-    if(firstCard){
+    if(statCards.length > 0){
 
-        firstCard.textContent =
+        statCards[0].textContent =
         totalQuestions + "+";
-
     }
 
 }
